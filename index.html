@@ -391,7 +391,21 @@ const FERIADOS = {
   '2026-12-25':'Natal'
 };
 
-function addBiz(date, n, lset) {
+function addBizCons(date, n, lset) {
+  let d = new Date(date), a = 0;
+  while (a < n) {
+    d.setDate(d.getDate() + 1);
+    const w = d.getDay();
+    if (w === 0) continue;
+    if (w === 6 && !lset.has(d.getDate())) continue;
+    const fk = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    if (FERIADOS[fk]) continue;
+    a++;
+  }
+  return d;
+}
+
+function addBizRural(date, n) {
   let d = new Date(date), a = 0;
   while (a < n) {
     d.setDate(d.getDate() + 1);
@@ -427,8 +441,8 @@ function render() {
 
   r.forEach(([n, ld]) => {
     const lDate = new Date(y, m, ld);
-    const cDate = addBiz(lDate, 2, lset);
-    const rDate = addBiz(lDate, 5, lset);
+    const cDate = addBizCons(lDate, 2, lset);
+    const rDate = addBizRural(lDate, 5);
     addToByDay(lDate, 'L', n);
     addToByDay(cDate, 'C', n);
     addToByDay(rDate, 'R', n);
@@ -440,8 +454,8 @@ function render() {
     const prevLset = new Set(prev.r.map(x => x[1]));
     prev.r.forEach(([n, ld]) => {
       const lDate = new Date(prev.y, prev.m, ld);
-      const cDate = addBiz(lDate, 2, prevLset);
-      const rDate = addBiz(lDate, 5, prevLset);
+      const cDate = addBizCons(lDate, 2, prevLset);
+      const rDate = addBizRural(lDate, 5);
       addToByDay(cDate, 'C', n);
       addToByDay(rDate, 'R', n);
     });
