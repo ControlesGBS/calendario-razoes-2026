@@ -176,6 +176,12 @@
   .row.today .day-n { color: #155c2a !important; }
   .row.today .day-lbl { color: #1e7a3a !important; }
 
+  .row.holiday .cell { background: #fff0f0; }
+  .row.holiday .day-n { color: #c0392b; }
+  .row.holiday .day-lbl { color: #c0392b; }
+  .row.holiday .mes-lbl { color: #c0392b; }
+  .feriado-lbl { font-size: 10px; color: #c0392b; font-weight: 600; font-family: 'Barlow', sans-serif; letter-spacing: .03em; white-space: nowrap; }
+
   .cell {
     padding: 8px 7px;
     text-align: center;
@@ -341,13 +347,23 @@ const CAL = {
 
 let idx = 0;
 
+const FERIADOS = {
+  '2026-6-4':  'Corpus Christi',
+  '2026-9-7':  'Independência do Brasil',
+  '2026-10-12':'N. S. Aparecida',
+  '2026-11-2': 'Finados',
+  '2026-11-20':'Consciência Negra',
+  '2026-12-25':'Natal'
+};
+
 function addBiz(date, n, lset) {
   let d = new Date(date), a = 0;
   while (a < n) {
     d.setDate(d.getDate() + 1);
     const w = d.getDay();
     if (w === 0) continue;
-    if (w === 6 && !lset.has(d.getDate())) continue;
+    const fk = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    if (FERIADOS[fk]) continue;
     a++;
   }
   return d;
@@ -389,22 +405,26 @@ function render() {
     const wd = dt.getDay();
     const isSun = wd === 0;
     const isTod = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d;
+    const feriadoKey = `${y}-${m+1}-${d}`;
+    const feriadoNome = FERIADOS[feriadoKey] || null;
     const info = byDay[d] || { L:[], C:[], R:[] };
 
     let rowClass = 'row';
     if (isTod) rowClass += ' today';
     else if (isSun) rowClass += ' sunday';
+    else if (feriadoNome) rowClass += ' holiday';
     else { rowClass += rowCount % 2 === 0 ? ' even' : ' odd'; }
     if (!isSun) rowCount++;
 
     const lc = isSun ? `<span class="dash">— — — — —</span>` : info.L.map(n => `<span class="rb rl">RAZÃO ${p2(n)}</span>`).join('');
     const cc = isSun ? `<span class="dash">— — — — —</span>` : info.C.map(n => `<span class="rb rc">RAZÃO ${p2(n)}</span>`).join('');
     const rc = isSun ? `<span class="dash">— — — — —</span>` : info.R.map(n => `<span class="rb rr">RAZÃO ${p2(n)}</span>`).join('');
+    const feriadoTag = feriadoNome ? `<span class="feriado-lbl">🔴 ${feriadoNome}</span>` : '';
 
     html += `<div class="${rowClass}">
       <div class="cell" style="justify-content:center"><span class="mes-lbl">${name}</span></div>
       <div class="cell"><span class="day-n">${d}</span></div>
-      <div class="cell"><span class="day-lbl">${DN[wd]}</span></div>
+      <div class="cell" style="flex-direction:column;gap:1px"><span class="day-lbl">${DN[wd]}</span>${feriadoTag}</div>
       <div class="cell">${lc}</div>
       <div class="cell">${cc}</div>
       <div class="cell">${rc}</div>
