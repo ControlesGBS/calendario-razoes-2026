@@ -177,10 +177,11 @@
   .row.today .day-lbl { color: #1e7a3a !important; }
 
   .row.holiday .cell { background: #fff0f0; }
+  .row.holiday .cell:nth-child(n+4) { border-right-color: transparent; }
   .row.holiday .day-n { color: #c0392b; }
   .row.holiday .day-lbl { color: #c0392b; }
   .row.holiday .mes-lbl { color: #c0392b; }
-  .feriado-lbl { font-size: 10px; color: #c0392b; font-weight: 600; font-family: 'Barlow', sans-serif; letter-spacing: .03em; white-space: nowrap; }
+  .feriado-lbl { font-size: 11px; color: #c0392b; font-weight: 600; font-family: 'Barlow', sans-serif; letter-spacing: .03em; white-space: nowrap; }
 
   .cell {
     padding: 8px 7px;
@@ -381,18 +382,35 @@ function render() {
   const lset = new Set(r.map(x => x[1]));
   const byDay = {};
 
+  const addToByDay = (date, col, n) => {
+    if (date.getFullYear() === y && date.getMonth() === m) {
+      const k = date.getDate();
+      if (!byDay[k]) byDay[k] = { L:[], C:[], R:[] };
+      byDay[k][col].push(n);
+    }
+  };
+
   r.forEach(([n, ld]) => {
     const lDate = new Date(y, m, ld);
     const cDate = addBiz(lDate, 2, lset);
     const rDate = addBiz(lDate, 5, lset);
-    const cd = cDate.getDate(), rd = rDate.getDate();
-    if (!byDay[ld]) byDay[ld] = { L:[], C:[], R:[] };
-    byDay[ld].L.push(n);
-    if (!byDay[cd]) byDay[cd] = { L:[], C:[], R:[] };
-    byDay[cd].C.push(n);
-    if (!byDay[rd]) byDay[rd] = { L:[], C:[], R:[] };
-    byDay[rd].R.push(n);
+    addToByDay(lDate, 'L', n);
+    addToByDay(cDate, 'C', n);
+    addToByDay(rDate, 'R', n);
   });
+
+  if (idx > 0) {
+    const prevName = MN[idx - 1];
+    const prev = CAL[prevName];
+    const prevLset = new Set(prev.r.map(x => x[1]));
+    prev.r.forEach(([n, ld]) => {
+      const lDate = new Date(prev.y, prev.m, ld);
+      const cDate = addBiz(lDate, 2, prevLset);
+      const rDate = addBiz(lDate, 5, prevLset);
+      addToByDay(cDate, 'C', n);
+      addToByDay(rDate, 'R', n);
+    });
+  }
 
   const dim = new Date(y, m + 1, 0).getDate();
   const today = new Date();
@@ -423,8 +441,8 @@ function render() {
     html += `<div class="${rowClass}">
       <div class="cell" style="justify-content:center"><span class="mes-lbl">${name}</span></div>
       <div class="cell"><span class="day-n">${d}</span></div>
-      <div class="cell" style="flex-direction:column;gap:1px"><span class="day-lbl">${DN[wd]}</span>${feriadoTag}</div>
-      <div class="cell">${lc}</div>
+      <div class="cell"><span class="day-lbl">${DN[wd]}</span></div>
+      <div class="cell">${lc || feriadoTag}</div>
       <div class="cell">${cc}</div>
       <div class="cell">${rc}</div>
     </div>`;
